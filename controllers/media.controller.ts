@@ -13,8 +13,7 @@ export class MediaController {
       const files = request.files();
 
       const response = await this.mediaService.uploadProductImages(files);
-
-      return ApiHelper.success(reply, { hello: "world" });
+      return ApiHelper.success(reply, response);
     } catch (error) {
       let err = error as Error;
       return ApiHelper.callFailed(reply, err.message);
