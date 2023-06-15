@@ -3,17 +3,21 @@ import Routes from "./router";
 import underPressure from "@fastify/under-pressure";
 import fastifySwagger from "@fastify/swagger";
 import cors from "@fastify/cors";
-import 'reflect-metadata';
+import "reflect-metadata";
 import fastifyStatic from "@fastify/static";
 import path from "path";
 import { connectMongoDB } from "./mongoose.config";
-import { config } from 'dotenv';
+import { config } from "dotenv";
+import multipart from "@fastify/multipart";
+import { firebaseInit } from "./firebaseInit";
 
 // Load environment variables from .env file
 config();
-const PORT = parseInt(process.env.PORT || "8005");
-const app: FastifyInstance = fastify({ logger: true, disableRequestLogging: true });
-
+const PORT = parseInt(process.env.PORT || "8025");
+const app: FastifyInstance = fastify({
+  logger: true,
+  disableRequestLogging: true,
+});
 
 const underPressureConfig = () => {
   return {
@@ -24,6 +28,15 @@ const underPressureConfig = () => {
     message: "Under Pressure 😯",
     exposeStatusRoute: "/status",
     healthCheckInterval: 5000,
+  };
+};
+
+const multipartConfig = () => {
+  return {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      files: 5, // Maximum 5 files allowed
+    },
   };
 };
 
@@ -46,25 +59,28 @@ const swaggerConfig = () => {
 };
 
 const fastifyStaticConfig = () => {
-    console.log(path.join(__dirname, '../public'))
-    return {
-        root: path.join(__dirname, '../public'),
-        prefix: '/public/', // specify a prefix for your static file URLs
-      }
-}
-app.register(cors)
+  console.log(path.join(__dirname, "../public"));
+  return {
+    root: path.join(__dirname, "../public"),
+    prefix: "/public/", // specify a prefix for your static file URLs
+  };
+};
+firebaseInit();
+
+app.register(cors);
+app.register(multipart, multipartConfig());
 app.register(underPressure, underPressureConfig());
 app.register(fastifySwagger, swaggerConfig());
-app.register(fastifyStatic,fastifyStaticConfig())
-app.register(require('@fastify/swagger-ui'), {
-    routePrefix: '/documentation',
-    uiConfig: {
-      docExpansion: 'full',
-      deepLinking: false
-    },
-    staticCSP: true,
-    transformSpecificationClone: true
-  })
+app.register(fastifyStatic, fastifyStaticConfig());
+app.register(require("@fastify/swagger-ui"), {
+  routePrefix: "/documentation",
+  uiConfig: {
+    docExpansion: "full",
+    deepLinking: false,
+  },
+  staticCSP: true,
+  transformSpecificationClone: true,
+});
 app.register(Routes);
 connectMongoDB();
 app.listen(PORT, (error, address) => {
