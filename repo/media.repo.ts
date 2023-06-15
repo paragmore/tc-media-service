@@ -9,12 +9,18 @@ export class MediaRepo {
 
   constructor() {}
 
-  async uploadFileToBucket(file: MultipartFile) {
+  onUploadProgress(progressEvent: any) {
+    console.log(progressEvent);
+  }
+
+  async uploadFileToBucket(file: MultipartFile, folderName: string) {
     try {
       const uniqueFilename = Date.now() + "-" + file.filename;
-      const fileToUpload = this.bucket.file(uniqueFilename);
+      const fileToUpload = this.bucket.file(`${folderName}/${uniqueFilename}`);
       await fileToUpload.save(await file.toBuffer(), {
         contentType: file.mimetype,
+        onUploadProgress: this.onUploadProgress,
+        public: true,
       });
 
       const url = await fileToUpload.getSignedUrl({
