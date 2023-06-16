@@ -27,7 +27,7 @@ export class MediaRepo {
         action: "read",
         expires: "03-17-9999",
       });
-      return url;
+      return { url, fileName: file.filename };
     } catch (error) {
       const err = error as Error;
       return new ApiError(err.message, 500);
